@@ -1,0 +1,22 @@
+# Development logs
+backend.log
+frontend.log
+
+# Generated scripts (created by setup.sh)
+start-dev.sh
+stop-dev.sh
+docker-helpers.sh
+
+# mise
+.mise.local.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

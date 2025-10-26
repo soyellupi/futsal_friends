@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: futsal_friends_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: futsal_user
+      POSTGRES_PASSWORD: futsal_password
+      POSTGRES_DB: futsal_friends_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U futsal_user -d futsal_friends_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Opcional: PgAdmin para gestionar la BD visualmente
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: futsal_friends_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@futsalfriends.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    profiles:
+      - tools  # Solo se inicia con: docker-compose --profile tools up
+
+volumes:
+  postgres_data:
+    name: futsal_friends_postgres_data
+  pgadmin_data:
+    name: futsal_friends_pgadmin_data

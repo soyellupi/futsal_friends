@@ -1,0 +1,93 @@
+# Futsal Friends - Mise Configuration
+# https://mise.jdx.dev/
+
+[tools]
+python = "3.11"
+node = "20"
+
+[env]
+# Backend environment
+_.python.venv = { path = "backend/venv", create = true }
+
+[tasks.install]
+description = "Install all project dependencies"
+run = [
+    "cd backend && pip install -r requirements.txt",
+    "cd frontend && npm install"
+]
+
+[tasks.setup]
+description = "Run the full setup script"
+run = "./setup.sh"
+
+[tasks.dev]
+description = "Start development environment (backend + frontend)"
+run = "./start-dev.sh"
+
+[tasks.stop]
+description = "Stop development environment"
+run = "./stop-dev.sh"
+
+[tasks."backend:dev"]
+description = "Start backend development server"
+dir = "backend"
+run = "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+
+[tasks."frontend:dev"]
+description = "Start frontend development server"
+dir = "frontend"
+run = "npm run dev"
+
+[tasks."backend:test"]
+description = "Run backend tests"
+dir = "backend"
+run = "pytest"
+
+[tasks."frontend:test"]
+description = "Run frontend tests"
+dir = "frontend"
+run = "npm test"
+
+[tasks."backend:format"]
+description = "Format backend code with black"
+dir = "backend"
+run = "black ."
+
+[tasks."backend:lint"]
+description = "Lint backend code"
+dir = "backend"
+run = "flake8 ."
+
+[tasks."db:migrate"]
+description = "Run database migrations"
+dir = "backend"
+run = "alembic upgrade head"
+
+[tasks."db:migration"]
+description = "Create a new migration"
+dir = "backend"
+run = "alembic revision --autogenerate -m \"$1\""
+
+[tasks."db:shell"]
+description = "Open PostgreSQL shell"
+run = "./docker-helpers.sh shell"
+
+[tasks."db:reset"]
+description = "Reset database (WARNING: deletes all data)"
+run = "./docker-helpers.sh reset"
+
+[tasks."docker:start"]
+description = "Start Docker containers"
+run = "docker compose up -d"
+
+[tasks."docker:stop"]
+description = "Stop Docker containers"
+run = "docker compose down"
+
+[tasks."docker:logs"]
+description = "Show Docker logs"
+run = "docker compose logs -f db"
+
+[tasks."docker:pgadmin"]
+description = "Start PgAdmin web interface"
+run = "./docker-helpers.sh pgadmin"
