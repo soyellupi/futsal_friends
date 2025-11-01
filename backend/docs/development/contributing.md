@@ -1,0 +1,600 @@
+# Contributing Guidelines
+
+Thank you for your interest in contributing to Futsal Friends! This document provides guidelines and best practices for contributors.
+
+## Getting Started
+
+1. **Read the documentation**:
+   - [Setup Guide](setup.md) - Set up your development environment
+   - [Architecture Overview](../architecture/overview.md) - Understand the system
+   - [Database Schema](../database/schema.md) - Know the data model
+
+2. **Set up your environment**:
+   ```bash
+   ./setup.sh
+   ```
+
+3. **Run the tests**:
+   ```bash
+   pytest
+   ```
+
+## Development Workflow
+
+### 1. Create a Branch
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/your-feature-name
+```
+
+**Branch naming conventions:**
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation updates
+- `refactor/` - Code refactoring
+- `test/` - Test additions/updates
+
+**Examples:**
+- `feature/add-player-statistics`
+- `fix/rating-calculation-bug`
+- `docs/update-api-documentation`
+
+### 2. Make Your Changes
+
+Follow the coding standards (see below).
+
+### 3. Write Tests
+
+All code changes should include tests:
+
+```python
+# tests/test_feature.py
+import pytest
+
+@pytest.mark.asyncio
+async def test_new_feature(async_session):
+    # Arrange
+    # Act
+    # Assert
+    pass
+```
+
+### 4. Run Code Quality Checks
+
+```bash
+# Format code
+black app/
+
+# Check linting
+flake8 app/
+
+# Type check
+mypy app/
+
+# Run tests
+pytest
+
+# Check coverage
+pytest --cov=app --cov-report=term
+```
+
+### 5. Commit Your Changes
+
+Write clear, descriptive commit messages:
+
+```bash
+git add .
+git commit -m "Add player statistics endpoint
+
+- Implement GET /api/v1/players/{id}/stats
+- Add statistics calculation in PlayerService
+- Include tests for stats endpoint
+- Update API documentation
+"
+```
+
+**Commit message format:**
+```
+<type>: <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation
+- `style`: Formatting changes
+- `refactor`: Code restructuring
+- `test`: Test additions
+- `chore`: Maintenance
+
+### 6. Push and Create Pull Request
+
+```bash
+git push origin feature/your-feature-name
+```
+
+Then create a pull request on GitHub.
+
+## Coding Standards
+
+### Python Style Guide
+
+Follow **PEP 8** with these specifics:
+
+#### Line Length
+```python
+# Maximum line length: 88 characters (Black default)
+```
+
+#### Imports
+```python
+# Standard library
+import os
+from datetime import datetime
+
+# Third-party
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+
+# Local
+from app.models import Player
+from app.repositories import PlayerRepository
+```
+
+#### Type Hints
+```python
+# Always use type hints
+async def get_player(player_id: UUID) -> Optional[Player]:
+    ...
+
+# Use from __future__ import annotations for forward references
+from __future__ import annotations
+```
+
+#### Naming Conventions
+```python
+# Classes: PascalCase
+class PlayerRepository:
+    pass
+
+# Functions/methods: snake_case
+async def get_active_players():
+    pass
+
+# Constants: UPPER_SNAKE_CASE
+MAX_RATING = 5.0
+
+# Private methods: leading underscore
+def _calculate_internal():
+    pass
+```
+
+#### Docstrings
+```python
+def calculate_rating(player_id: UUID, match_id: UUID) -> float:
+    """
+    Calculate player rating based on match performance.
+
+    Args:
+        player_id: The player's unique identifier
+        match_id: The match identifier
+
+    Returns:
+        The calculated rating value
+
+    Raises:
+        ValueError: If player or match not found
+    """
+    ...
+```
+
+### Code Organization
+
+#### File Structure
+```python
+"""Module docstring explaining purpose"""
+
+# Imports
+from typing import List, Optional
+from uuid import UUID
+
+# Constants
+DEFAULT_RATING = 3.0
+
+# Classes
+class MyService:
+    """Class docstring"""
+
+    def __init__(self, db):
+        self.db = db
+
+    async def my_method(self) -> None:
+        """Method docstring"""
+        pass
+```
+
+#### Repository Pattern
+```python
+# Always use repositories, never direct database access in services
+# Good ✅
+player = await player_repo.get_by_id(player_id)
+
+# Bad ❌
+player = await db.get(Player, player_id)
+```
+
+#### Service Layer
+```python
+# Services contain business logic
+class RatingService:
+    async def calculate_match_ratings(self, match):
+        # Complex business logic here
+        # Coordinate multiple repositories
+        # Return calculated data
+        pass
+```
+
+#### API Endpoints
+```python
+# Endpoints are thin, delegate to services
+@router.post("/matches/{match_id}/result")
+async def create_result(
+    match_id: UUID,
+    result: MatchResultCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    # Validate input (handled by Pydantic)
+    # Call service
+    service = RatingService(db, ...)
+    await service.calculate_match_ratings(...)
+    # Return response
+    return response
+```
+
+### Database Conventions
+
+#### Migrations
+```python
+# Always review autogenerated migrations
+# Provide clear migration messages
+alembic revision --autogenerate -m "Add player email field"
+
+# Test migrations
+alembic upgrade head
+alembic downgrade -1
+alembic upgrade head
+```
+
+#### Model Definitions
+```python
+class Player(Base):
+    """Player model docstring"""
+
+    __tablename__ = "players"
+
+    # Primary key first
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
+
+    # Regular columns
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    # Timestamps last
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships after columns
+    matches: Mapped[list["Match"]] = relationship(...)
+```
+
+#### Queries
+```python
+# Use async/await
+result = await db.execute(select(Player).where(Player.id == player_id))
+player = result.scalar_one_or_none()
+
+# Eager load relationships
+result = await db.execute(
+    select(Match).options(joinedload(Match.teams))
+)
+
+# Use repository methods
+players = await player_repo.get_active_players()
+```
+
+## Testing Guidelines
+
+### Test Structure
+```python
+# Arrange - Act - Assert pattern
+@pytest.mark.asyncio
+async def test_create_player():
+    # Arrange
+    player_data = {"name": "John Doe"}
+
+    # Act
+    created_player = await player_repo.create(player_data)
+
+    # Assert
+    assert created_player.name == "John Doe"
+    assert created_player.id is not None
+```
+
+### Test Coverage
+- Aim for **>80% code coverage**
+- Test happy paths AND edge cases
+- Test error handling
+
+### Test Categories
+
+#### Unit Tests
+```python
+# Test individual functions/methods in isolation
+def test_calculate_rating_change():
+    change = _calculate_change(actual=1.0, expected=0.5)
+    assert change == 0.25
+```
+
+#### Integration Tests
+```python
+# Test multiple components together
+async def test_create_match_and_teams(db):
+    match = await match_repo.create(match_data)
+    teams = await team_service.create_balanced_teams(match.id, players)
+    assert len(teams) == 2
+```
+
+#### API Tests
+```python
+# Test endpoints end-to-end
+async def test_create_player_endpoint(client):
+    response = await client.post(
+        "/api/v1/players",
+        json={"name": "Test Player"}
+    )
+    assert response.status_code == 200
+```
+
+### Test Fixtures
+```python
+# Use pytest fixtures for common setup
+@pytest.fixture
+async def sample_player(db):
+    player = Player(name="Test Player")
+    db.add(player)
+    await db.commit()
+    return player
+
+async def test_with_player(sample_player):
+    assert sample_player.name == "Test Player"
+```
+
+## Documentation
+
+### Code Documentation
+```python
+# Docstrings for all public functions
+def calculate_rating(player: Player, matches: List[Match]) -> float:
+    """
+    Calculate player rating from recent matches.
+
+    This uses a rolling 3-match window with ELO-based calculations.
+
+    Args:
+        player: The player to calculate rating for
+        matches: List of recent matches (should be 3)
+
+    Returns:
+        The calculated rating (1.0 - 5.0)
+
+    Raises:
+        ValueError: If matches list is empty
+    """
+    ...
+```
+
+### API Documentation
+```python
+# Use FastAPI's automatic documentation
+@router.post(
+    "/players",
+    response_model=PlayerResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new player",
+    description="Creates a new player with the provided name",
+    responses={
+        201: {"description": "Player created successfully"},
+        400: {"description": "Invalid input"},
+    },
+)
+async def create_player(player: PlayerCreate):
+    ...
+```
+
+### Markdown Documentation
+- Update docs when changing functionality
+- Include examples
+- Keep docs in sync with code
+
+## Pull Request Process
+
+### Before Submitting
+
+1. **Self-review your code**
+2. **Run all tests**: `pytest`
+3. **Check code quality**:
+   ```bash
+   black app/
+   flake8 app/
+   mypy app/
+   ```
+4. **Update documentation** if needed
+5. **Add tests** for new features
+6. **Test database migrations** if applicable
+
+### PR Description
+
+Use this template:
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation update
+- [ ] Refactoring
+
+## Changes Made
+- List of specific changes
+- With bullet points
+
+## Testing
+- How was this tested?
+- What tests were added?
+
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Tests pass locally
+- [ ] Documentation updated
+- [ ] No breaking changes (or documented)
+
+## Related Issues
+Fixes #123
+```
+
+### PR Review Process
+
+1. **Automated checks** must pass
+2. **At least one approval** required
+3. **All comments addressed**
+4. **No merge conflicts**
+
+## Code Review Guidelines
+
+### As a Reviewer
+
+- Be constructive and respectful
+- Explain *why* changes are needed
+- Suggest alternatives
+- Approve when satisfied
+
+**Example feedback:**
+```
+# Good ✅
+"Consider using a repository method here instead of raw SQL for consistency.
+You could use `player_repo.get_active_players()` which already has this logic."
+
+# Avoid ❌
+"This is wrong, fix it."
+```
+
+### As an Author
+
+- Be open to feedback
+- Ask questions if unclear
+- Don't take criticism personally
+- Respond to all comments
+
+## Common Pitfalls to Avoid
+
+### ❌ Don't
+
+1. **Direct database access in endpoints**
+   ```python
+   # Bad
+   player = await db.get(Player, player_id)
+   ```
+
+2. **Missing type hints**
+   ```python
+   # Bad
+   def get_player(id):
+       ...
+   ```
+
+3. **No error handling**
+   ```python
+   # Bad
+   player = await player_repo.get_by_id(player_id)
+   return player  # What if None?
+   ```
+
+4. **Hardcoded values**
+   ```python
+   # Bad
+   rating = 3.0  # Use RatingConfig.INITIAL_RATING
+   ```
+
+5. **Untested code**
+   ```python
+   # Bad
+   # New feature with no tests
+   ```
+
+### ✅ Do
+
+1. **Use repositories**
+   ```python
+   # Good
+   player = await player_repo.get_by_id(player_id)
+   ```
+
+2. **Add type hints**
+   ```python
+   # Good
+   async def get_player(id: UUID) -> Optional[Player]:
+       ...
+   ```
+
+3. **Handle errors**
+   ```python
+   # Good
+   player = await player_repo.get_by_id(player_id)
+   if not player:
+       raise HTTPException(status_code=404)
+   ```
+
+4. **Use constants**
+   ```python
+   # Good
+   rating = RatingConfig.INITIAL_RATING
+   ```
+
+5. **Write tests**
+   ```python
+   # Good
+   async def test_new_feature():
+       ...
+   ```
+
+## Getting Help
+
+- **Documentation**: Check `/docs` directory first
+- **Questions**: Open a GitHub Discussion
+- **Bugs**: Create a GitHub Issue
+- **Chat**: Join our Discord/Slack (if available)
+
+## Recognition
+
+Contributors will be:
+- Listed in CONTRIBUTORS.md
+- Mentioned in release notes
+- Credited in commit history
+
+Thank you for contributing to Futsal Friends! 🎉⚽
+
+## See Also
+
+- [Setup Guide](setup.md) - Development environment setup
+- [Architecture Overview](../architecture/overview.md) - System design
+- [Database Schema](../database/schema.md) - Data model
+- [Repository Usage](../api/repositories.md) - Data access patterns
