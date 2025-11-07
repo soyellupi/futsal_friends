@@ -7,6 +7,12 @@ export const API_ENDPOINTS = {
     logout: `${API_BASE_URL}/api/v1/auth/logout`,
     refresh: `${API_BASE_URL}/api/v1/auth/refresh`,
   },
+  seasons: {
+    current: `${API_BASE_URL}/api/v1/seasons/current`,
+  },
+  leaderboard: {
+    bySeason: (seasonId: string) => `${API_BASE_URL}/api/v1/leaderboard/${seasonId}`,
+  },
 } as const;
 
 interface RequestOptions extends RequestInit {
