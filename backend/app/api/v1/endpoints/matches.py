@@ -84,6 +84,7 @@ async def get_match_details(
                     id=team_player.player_id,
                     name=team_player.player.name,
                     rating=player_rating,
+                    position=team_player.position,
                 )
             )
 

@@ -65,6 +65,7 @@ class MatchPlayerDetail(BaseModel):
     id: UUID
     name: str
     rating: Optional[float] = Field(None, description="Player's ELO rating before match")
+    position: Optional[str] = Field(None, description="Player position (e.g., 'goalkeeper')")
 
     model_config = {"from_attributes": True}
 

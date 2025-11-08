@@ -6,6 +6,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.models.player import PlayerType
+
 
 class PlayerBase(BaseModel):
     """Base player schema"""
@@ -16,13 +18,16 @@ class PlayerBase(BaseModel):
 class PlayerCreate(PlayerBase):
     """Schema for creating a player"""
 
-    pass
+    player_type: PlayerType = Field(
+        default=PlayerType.REGULAR, description="Type of player (regular or invited)"
+    )
 
 
 class PlayerUpdate(BaseModel):
     """Schema for updating a player"""
 
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="Player name")
+    player_type: Optional[PlayerType] = Field(None, description="Type of player (regular or invited)")
     is_active: Optional[bool] = Field(None, description="Player active status")
 
 
@@ -30,6 +35,7 @@ class PlayerResponse(PlayerBase):
     """Schema for player response"""
 
     id: UUID
+    player_type: PlayerType
     is_active: bool
     created_at: datetime
     updated_at: datetime

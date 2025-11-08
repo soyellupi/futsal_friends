@@ -17,6 +17,7 @@ from app.models import (
     Team,
     TeamPlayer,
 )
+from app.models.player import PlayerType
 from app.repositories import RatingRepository, SeasonRepository, TeamRepository
 
 
@@ -130,6 +131,7 @@ class RatingService:
                     match_result,
                     team_avg,
                     opponent_avg,
+                    player.player_type,
                 )
             )
 
@@ -242,10 +244,16 @@ class RatingService:
         match_result: MatchResultOutcome,
         team_avg_rating: Optional[float],
         opponent_avg_rating: Optional[float],
+        player_type: PlayerType,
     ) -> tuple[float, float, float, float]:
         """
         Calculate the rating change for a player after a match.
         Returns: (total_change, attendance_bonus, third_time_bonus, penalty)
+
+        Special handling for invited players:
+        - No penalty for non-attendance (rating stays same)
+        - No third time bonus (even if they attended)
+        - Normal ELO calculation when they attend
         """
         # For first 3 matches, no rating change
         if match_number <= RatingConfig.MIN_MATCHES_FOR_RATING:
@@ -257,14 +265,20 @@ class RatingService:
         elo_change = 0.0
 
         if not attended_match:
-            # Player didn't attend - apply penalty
-            penalty = RatingConfig.NON_ATTENDANCE_PENALTY
-            return (penalty, 0.0, 0.0, penalty)
+            # Player didn't attend
+            if player_type == PlayerType.INVITED:
+                # Invited players: no penalty, rating stays the same
+                return (0.0, 0.0, 0.0, 0.0)
+            else:
+                # Regular players: apply penalty
+                penalty = RatingConfig.NON_ATTENDANCE_PENALTY
+                return (penalty, 0.0, 0.0, penalty)
 
         # Player attended - calculate ELO change
         attendance_bonus = RatingConfig.ATTENDANCE_BONUS
 
-        if attended_third_time:
+        # Third time bonus only for regular players
+        if attended_third_time and player_type == PlayerType.REGULAR:
             third_time_bonus = RatingConfig.THIRD_TIME_BONUS
 
         # Calculate ELO change based on match result

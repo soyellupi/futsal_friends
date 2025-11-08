@@ -14,6 +14,7 @@ from app.models import (
     PlayerSeasonRating,
     ThirdTimeAttendance,
 )
+from app.models.player import PlayerType
 from app.repositories import SeasonRepository
 from app.schemas.leaderboard import PlayerStats
 
@@ -35,6 +36,16 @@ class LeaderboardService:
         leaderboard = []
 
         for season_rating in season_ratings:
+            # Get player to check type
+            result = await self.db.execute(
+                select(Player).where(Player.id == season_rating.player_id)
+            )
+            player = result.scalar_one()
+
+            # Skip invited players from leaderboard
+            if player.player_type == PlayerType.INVITED:
+                continue
+
             # Get player match ratings for statistics
             result = await self.db.execute(
                 select(PlayerMatchRating)
@@ -78,12 +89,6 @@ class LeaderboardService:
                 if season_rating.matches_completed > 0
                 else 0.0
             )
-
-            # Get player name
-            result = await self.db.execute(
-                select(Player).where(Player.id == season_rating.player_id)
-            )
-            player = result.scalar_one()
 
             player_stats = PlayerStats(
                 player_id=season_rating.player_id,
@@ -145,6 +150,12 @@ class LeaderboardService:
         )
         match_ratings = list(result.scalars().all())
 
+        # Get player to check type
+        result = await self.db.execute(
+            select(Player).where(Player.id == player_id)
+        )
+        player = result.scalar_one()
+
         # Calculate statistics
         wins = sum(
             1 for r in match_ratings if r.match_result == MatchResultOutcome.WIN
@@ -155,7 +166,12 @@ class LeaderboardService:
         losses = sum(
             1 for r in match_ratings if r.match_result == MatchResultOutcome.LOSS
         )
-        third_time_attended = sum(1 for r in match_ratings if r.attended_third_time)
+
+        # Invited players: ignore third time attendance
+        if player.player_type == PlayerType.INVITED:
+            third_time_attended = 0
+        else:
+            third_time_attended = sum(1 for r in match_ratings if r.attended_third_time)
 
         # Calculate total points
         total_points = (
@@ -172,12 +188,6 @@ class LeaderboardService:
             if season_rating.matches_completed > 0
             else 0.0
         )
-
-        # Get player name
-        result = await self.db.execute(
-            select(Player).where(Player.id == player_id)
-        )
-        player = result.scalar_one()
 
         return PlayerStats(
             player_id=player_id,
