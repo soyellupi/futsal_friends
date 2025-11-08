@@ -11,7 +11,10 @@ export const API_ENDPOINTS = {
     current: `${API_BASE_URL}/api/v1/seasons/current`,
   },
   leaderboard: {
-    bySeason: (seasonId: string) => `${API_BASE_URL}/api/v1/leaderboard/${seasonId}`,
+    byYear: (year: number) => `${API_BASE_URL}/api/v1/seasons/${year}/leaderboard`,
+  },
+  matches: {
+    bySeasonWeek: (year: number, week: number) => `${API_BASE_URL}/api/v1/seasons/${year}/matches/${week}`,
   },
 } as const;
 

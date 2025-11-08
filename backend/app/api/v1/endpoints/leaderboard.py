@@ -1,7 +1,5 @@
 """Leaderboard endpoints"""
 
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,22 +13,25 @@ from app.services.leaderboard_service import LeaderboardService
 router = APIRouter()
 
 
-@router.get("/{season_id}", response_model=LeaderboardWithRanking)
+@router.get("/{year}/leaderboard", response_model=LeaderboardWithRanking)
 async def get_season_leaderboard(
-    season_id: UUID,
+    year: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get the leaderboard for a specific season"""
+    """Get the leaderboard for a specific season year"""
     season_repo = SeasonRepository(db)
 
-    # Check if season exists
-    season = await season_repo.get_by_id(season_id)
-    if not season:
-        raise HTTPException(status_code=404, detail="Season not found")
+    # Get seasons for the specified year
+    seasons = await season_repo.get_by_year(year)
+    if not seasons:
+        raise HTTPException(status_code=404, detail=f"No season found for year {year}")
+
+    # Use the first season (ordered by start_date)
+    season = seasons[0]
 
     # Calculate leaderboard
     leaderboard_service = LeaderboardService(db, season_repo)
-    player_stats = await leaderboard_service.calculate_season_leaderboard(season_id)
+    player_stats = await leaderboard_service.calculate_season_leaderboard(season.id)
 
     # Add rankings
     entries = [
@@ -41,7 +42,7 @@ async def get_season_leaderboard(
     # Count total completed matches in the season
     result = await db.execute(
         select(func.count(Match.id)).where(
-            Match.season_id == season_id,
+            Match.season_id == season.id,
             Match.status == MatchStatus.COMPLETED
         )
     )

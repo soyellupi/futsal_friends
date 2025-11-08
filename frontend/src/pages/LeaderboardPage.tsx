@@ -1,28 +1,32 @@
+import { useParams } from 'react-router-dom';
 import { LeaderboardTable } from '../components/features/LeaderboardTable';
-import { useCurrentSeason } from '../hooks/useCurrentSeason';
+import { useLeaderboardByYear } from '../hooks/useLeaderboardByYear';
 
 export function LeaderboardPage() {
-  const { data: season, isLoading: isSeasonLoading, error: seasonError } = useCurrentSeason();
+  const { year } = useParams<{ year: string }>();
+  const yearNum = year ? parseInt(year, 10) : undefined;
 
-  if (isSeasonLoading) {
+  const { data: leaderboardData, isLoading, error } = useLeaderboardByYear(yearNum);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-600 dark:text-gray-400">Loading season data...</div>
+            <div className="text-gray-600 dark:text-gray-400">Loading leaderboard...</div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (seasonError) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-red-600 dark:text-red-400">
-              Error loading season: {seasonError.message}
+              Error loading leaderboard: {error.message}
             </div>
           </div>
         </div>
@@ -30,12 +34,12 @@ export function LeaderboardPage() {
     );
   }
 
-  if (!season) {
+  if (!leaderboardData) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-600 dark:text-gray-400">No active season found</div>
+            <div className="text-gray-600 dark:text-gray-400">No leaderboard data found</div>
           </div>
         </div>
       </div>
@@ -60,7 +64,7 @@ export function LeaderboardPage() {
           <div className="flex flex-wrap items-center gap-4">
             <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {season.name}
+                {leaderboardData.season_name}
               </h2>
             </div>
           </div>
@@ -68,7 +72,7 @@ export function LeaderboardPage() {
 
         {/* Leaderboard Table Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <LeaderboardTable seasonId={season.id} />
+          <LeaderboardTable data={leaderboardData} />
         </div>
 
         {/* Legend */}

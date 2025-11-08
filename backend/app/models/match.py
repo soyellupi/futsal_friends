@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,6 +26,11 @@ class Match(Base):
 
     __tablename__ = "matches"
 
+    __table_args__ = (
+        UniqueConstraint("season_id", "match_week", name="uq_season_match_week"),
+        CheckConstraint("match_week > 0", name="ck_match_week_positive"),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
@@ -34,6 +39,12 @@ class Match(Base):
         ForeignKey("seasons.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
+    )
+    match_week: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        index=True,
+        comment="Sequential week number within the season"
     )
     match_date: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, index=True

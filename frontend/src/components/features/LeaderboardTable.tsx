@@ -3,11 +3,11 @@ import { TableHeader } from '../common/TableHeader';
 import { TableBody } from '../common/TableBody';
 import { TableRow } from '../common/TableRow';
 import { TableCell } from '../common/TableCell';
-import { useLeaderboard } from '../../hooks/useLeaderboard';
+import type { LeaderboardData } from '../../types/leaderboard.types';
 import clsx from 'clsx';
 
 interface LeaderboardTableProps {
-  seasonId: string;
+  data: LeaderboardData;
   className?: string;
 }
 
@@ -45,27 +45,7 @@ function getRankBadge(rank: number) {
   );
 }
 
-export function LeaderboardTable({ seasonId, className }: LeaderboardTableProps) {
-  const { data, isLoading, error } = useLeaderboard(seasonId);
-
-  if (isLoading) {
-    return (
-      <div className={clsx('w-full p-8 flex items-center justify-center', className)}>
-        <div className="text-gray-600 dark:text-gray-400">Loading leaderboard...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={clsx('w-full p-8 flex items-center justify-center', className)}>
-        <div className="text-red-600 dark:text-red-400">
-          Error loading leaderboard: {error.message}
-        </div>
-      </div>
-    );
-  }
-
+export function LeaderboardTable({ data, className }: LeaderboardTableProps) {
   if (!data || data.entries.length === 0) {
     return (
       <div className={clsx('w-full p-8 flex items-center justify-center', className)}>

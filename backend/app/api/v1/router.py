@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import leaderboard, seasons
+from app.api.v1.endpoints import leaderboard, matches, seasons
 
 api_router = APIRouter()
 
@@ -15,4 +15,5 @@ async def api_root():
 
 # Include endpoint routers
 api_router.include_router(seasons.router, prefix="/seasons", tags=["seasons"])
-api_router.include_router(leaderboard.router, prefix="/leaderboard", tags=["leaderboard"])
+api_router.include_router(leaderboard.router, prefix="/seasons", tags=["leaderboard"])
+api_router.include_router(matches.router, prefix="/seasons", tags=["matches"])

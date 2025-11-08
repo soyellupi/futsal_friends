@@ -1,12 +1,13 @@
 """Match schemas"""
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from app.models.match import MatchStatus
+from app.models.team import TeamName
 
 
 class MatchBase(BaseModel):
@@ -54,5 +55,45 @@ class MatchWithDetails(MatchResponse):
     attending_count: int = Field(0, description="Number of actual attendees")
     has_teams: bool = Field(False, description="Whether teams have been created")
     has_result: bool = Field(False, description="Whether result has been recorded")
+
+    model_config = {"from_attributes": True}
+
+
+class MatchPlayerDetail(BaseModel):
+    """Player details for match view"""
+
+    id: UUID
+    name: str
+    rating: Optional[float] = Field(None, description="Player's ELO rating before match")
+
+    model_config = {"from_attributes": True}
+
+
+class MatchTeamDetail(BaseModel):
+    """Team details for match view"""
+
+    id: UUID
+    name: TeamName
+    score: Optional[int] = Field(None, description="Team score")
+    players: List[MatchPlayerDetail] = Field(default_factory=list)
+    average_rating: Optional[float] = Field(None, description="Average team rating")
+
+    model_config = {"from_attributes": True}
+
+
+class ThirdTimeAttendee(BaseModel):
+    """Third time attendee details"""
+
+    id: UUID
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
+class MatchDetailResponse(MatchResponse):
+    """Complete match details including teams, players, result, and third-time attendance"""
+
+    teams: List[MatchTeamDetail] = Field(default_factory=list)
+    third_time_attendees: List[ThirdTimeAttendee] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}

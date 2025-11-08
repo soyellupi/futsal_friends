@@ -4,11 +4,11 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models import Match, MatchAttendance, MatchStatus, RSVPStatus, ThirdTimeAttendance
+from app.models import Match, MatchAttendance, MatchStatus, RSVPStatus, Season, ThirdTimeAttendance
 from app.repositories.base import BaseRepository
 
 
@@ -77,6 +77,32 @@ class MatchRepository(BaseRepository[Match]):
             )
         )
         return result.scalars().unique().one_or_none()
+
+    async def get_by_season_year_and_week(
+        self, year: int, match_week: int
+    ) -> Optional[Match]:
+        """Get match by season year and match week"""
+        result = await self.db.execute(
+            select(Match)
+            .join(Season)
+            .where(Season.year == year, Match.match_week == match_week)
+            .options(
+                joinedload(Match.attendances),
+                joinedload(Match.third_time_attendances),
+                joinedload(Match.teams),
+                joinedload(Match.result),
+            )
+        )
+        return result.scalars().unique().one_or_none()
+
+    async def get_next_match_week(self, season_id: UUID) -> int:
+        """Get the next available match_week for a season"""
+        result = await self.db.execute(
+            select(func.coalesce(func.max(Match.match_week), 0))
+            .where(Match.season_id == season_id)
+        )
+        max_match_week = result.scalar()
+        return max_match_week + 1
 
     async def get_match_attendance(
         self, match_id: UUID, player_id: UUID
