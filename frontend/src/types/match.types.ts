@@ -10,10 +10,17 @@ export enum TeamName {
   TEAM_B = 'pink'
 }
 
+export enum PlayerType {
+  REGULAR = 'regular',
+  INVITED = 'invited'
+}
+
 export interface MatchPlayerDetail {
   id: string;
   name: string;
   rating: number | null;
+  player_type?: PlayerType;
+  position?: string | null;
 }
 
 export interface MatchTeamDetail {

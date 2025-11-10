@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useMatch } from '../hooks/useMatch';
 import type { MatchPlayerDetail, MatchTeamDetail, TeamName } from '../types/match.types';
+import { PlayerType } from '../types/match.types';
 
 function formatMatchDate(dateString: string): string {
   const date = new Date(dateString);
@@ -30,6 +31,15 @@ function TeamCard({
   isWinner: boolean | null
 }) {
   const totalRank = calculateTotalRank(team.players);
+
+  // Sort players: goalkeepers first, then regular players
+  const sortedPlayers = [...team.players].sort((a, b) => {
+    const aIsGK = a.position === 'goalkeeper';
+    const bIsGK = b.position === 'goalkeeper';
+    if (aIsGK && !bIsGK) return -1;
+    if (!aIsGK && bIsGK) return 1;
+    return 0;
+  });
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border ${
@@ -70,14 +80,26 @@ function TeamCard({
               No players assigned yet
             </div>
           ) : (
-            team.players.map((player) => (
+            sortedPlayers.map((player) => (
               <div
                 key={player.id}
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
               >
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {player.name}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {player.name}
+                  </span>
+                  {player.position === 'goalkeeper' && (
+                    <span className="px-2 py-0.5 text-xs font-bold bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
+                      GK
+                    </span>
+                  )}
+                  {player.player_type === PlayerType.INVITED && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                      Invited
+                    </span>
+                  )}
+                </div>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200">
                   {player.rating !== null ? Math.round(player.rating) : 'N/A'} pts
                 </span>
