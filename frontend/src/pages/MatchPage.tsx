@@ -15,8 +15,11 @@ function formatMatchDate(dateString: string): string {
   }).format(date);
 }
 
-function calculateTotalRank(players: MatchPlayerDetail[]): number {
-  return players.reduce((sum, player) => sum + (player.rating || 0), 0);
+function calculateTotalRank(players: MatchPlayerDetail[], useCurrentRating: boolean = false): number {
+  return players.reduce((sum, player) => {
+    const rating = useCurrentRating ? (player.current_rating || 0) : (player.rating || 0);
+    return sum + rating;
+  }, 0);
 }
 
 function getTeamDisplayName(teamName: TeamName): string {
@@ -25,12 +28,15 @@ function getTeamDisplayName(teamName: TeamName): string {
 
 function TeamCard({
   team,
-  isWinner
+  isWinner,
+  hasResult
 }: {
   team: MatchTeamDetail;
-  isWinner: boolean | null
+  isWinner: boolean | null;
+  hasResult: boolean;
 }) {
-  const totalRank = calculateTotalRank(team.players);
+  // Use current_rating if there's no result, otherwise use rating (before match)
+  const totalRank = calculateTotalRank(team.players, !hasResult);
 
   // Sort players: goalkeepers first, then regular players
   const sortedPlayers = [...team.players].sort((a, b) => {
@@ -48,60 +54,58 @@ function TeamCard({
         : isWinner === false
         ? 'border-red-300 dark:border-red-700'
         : 'border-gray-200 dark:border-gray-700'
-    } p-6`}>
-      <div className="mb-4">
+    } p-3 sm:p-4 lg:p-6`}>
+      <div className="mb-3 sm:mb-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
             {getTeamDisplayName(team.name)}
           </h3>
           {isWinner === true && (
-            <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-semibold">
+            <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs sm:text-sm font-semibold">
               Winner
             </span>
           )}
         </div>
-        <div className="flex items-baseline gap-4">
-          <div className="text-5xl font-bold text-primary-600 dark:text-primary-400">
-            {team.score ?? 0}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Total Rank: <span className="font-semibold text-gray-900 dark:text-white">{Math.round(totalRank)}</span>
-          </div>
+        <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+          Total Rank: <span className="font-semibold text-lg sm:text-xl text-gray-900 dark:text-white">{Math.round(totalRank)}</span>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+      <div className="space-y-1.5 sm:space-y-2">
+        <h4 className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
           Players
         </h4>
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           {team.players.length === 0 ? (
-            <div className="text-sm text-gray-600 dark:text-gray-400 italic">
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 italic">
               No players assigned yet
             </div>
           ) : (
             sortedPlayers.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 dark:text-white">
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap min-w-0">
+                  <span className="font-medium text-xs sm:text-sm text-gray-900 dark:text-white truncate">
                     {player.name}
                   </span>
                   {player.position === 'goalkeeper' && (
-                    <span className="px-2 py-0.5 text-xs font-bold bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
+                    <span className="px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded flex-shrink-0">
                       GK
                     </span>
                   )}
                   {player.player_type === PlayerType.INVITED && (
-                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
+                    <span className="px-1.5 sm:px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded flex-shrink-0">
                       Invited
                     </span>
                   )}
                 </div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200">
-                  {player.rating !== null ? Math.round(player.rating) : 'N/A'} pts
+                <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 flex-shrink-0 ml-1">
+                  {(() => {
+                    const displayRating = hasResult ? player.rating : player.current_rating;
+                    return displayRating !== null ? Math.round(displayRating) : 'N/A';
+                  })()} pts
                 </span>
               </div>
             ))
@@ -160,15 +164,16 @@ export function MatchPage() {
   const blackTeam = match.teams.find(t => t.name === 'black');
   const pinkTeam = match.teams.find(t => t.name === 'pink');
 
-  // Determine winner
+  // Determine winner and if match has result
   let blackTeamIsWinner: boolean | null = null;
   let pinkTeamIsWinner: boolean | null = null;
+  const hasResult = blackTeam?.score !== null && pinkTeam?.score !== null;
 
-  if (blackTeam && pinkTeam && blackTeam.score !== null && pinkTeam.score !== null) {
-    if (blackTeam.score > pinkTeam.score) {
+  if (blackTeam && pinkTeam && hasResult) {
+    if (blackTeam.score! > pinkTeam.score!) {
       blackTeamIsWinner = true;
       pinkTeamIsWinner = false;
-    } else if (pinkTeam.score > blackTeam.score) {
+    } else if (pinkTeam.score! > blackTeam.score!) {
       blackTeamIsWinner = false;
       pinkTeamIsWinner = true;
     }
@@ -194,24 +199,24 @@ export function MatchPage() {
 
         {/* Match Score Summary */}
         {blackTeam && pinkTeam && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-            <div className="flex items-center justify-center gap-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-4 sm:mb-6">
+            <div className="flex items-center justify-center gap-4 sm:gap-6 lg:gap-8">
               <div className="text-center">
-                <div className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                <div className="text-sm sm:text-lg lg:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                   {getTeamDisplayName(blackTeam.name)}
                 </div>
-                <div className="text-5xl font-bold text-primary-600 dark:text-primary-400">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-600 dark:text-primary-400">
                   {blackTeam.score ?? 0}
                 </div>
               </div>
-              <div className="text-3xl font-bold text-gray-400 dark:text-gray-600">
+              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-400 dark:text-gray-600">
                 VS
               </div>
               <div className="text-center">
-                <div className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                <div className="text-sm sm:text-lg lg:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                   {getTeamDisplayName(pinkTeam.name)}
                 </div>
-                <div className="text-5xl font-bold text-primary-600 dark:text-primary-400">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-600 dark:text-primary-400">
                   {pinkTeam.score ?? 0}
                 </div>
               </div>
@@ -230,9 +235,9 @@ export function MatchPage() {
 
         {/* Team Details */}
         {blackTeam && pinkTeam && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TeamCard team={blackTeam} isWinner={blackTeamIsWinner} />
-            <TeamCard team={pinkTeam} isWinner={pinkTeamIsWinner} />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+            <TeamCard team={blackTeam} isWinner={blackTeamIsWinner} hasResult={hasResult} />
+            <TeamCard team={pinkTeam} isWinner={pinkTeamIsWinner} hasResult={hasResult} />
           </div>
         )}
 

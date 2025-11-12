@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.models.match import MatchStatus
+from app.models.player import PlayerType
 from app.models.team import TeamName
 
 
@@ -65,6 +66,8 @@ class MatchPlayerDetail(BaseModel):
     id: UUID
     name: str
     rating: Optional[float] = Field(None, description="Player's ELO rating before match")
+    current_rating: Optional[float] = Field(None, description="Player's current ELO rating")
+    player_type: PlayerType = Field(PlayerType.REGULAR, description="Player type (regular or invited)")
     position: Optional[str] = Field(None, description="Player position (e.g., 'goalkeeper')")
 
     model_config = {"from_attributes": True}

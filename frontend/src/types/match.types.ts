@@ -19,6 +19,7 @@ export interface MatchPlayerDetail {
   id: string;
   name: string;
   rating: number | null;
+  current_rating: number | null;
   player_type?: PlayerType;
   position?: string | null;
 }

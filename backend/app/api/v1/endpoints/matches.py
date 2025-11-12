@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.database import get_db
-from app.models import Player, PlayerMatchRating, Team, TeamPlayer, ThirdTimeAttendance
+from app.models import Player, PlayerMatchRating, PlayerSeasonRating, Team, TeamPlayer, ThirdTimeAttendance
 from app.repositories.match import MatchRepository
 from app.schemas.match import (
     MatchDetailResponse,
@@ -53,6 +53,14 @@ async def get_match_details(
     ratings = list(ratings_result.scalars().all())
     rating_map = {rating.player_id: rating.rating_before for rating in ratings}
 
+    # Get current season ratings for all players
+    current_ratings_result = await db.execute(
+        select(PlayerSeasonRating)
+        .where(PlayerSeasonRating.season_id == match.season_id)
+    )
+    current_ratings = list(current_ratings_result.scalars().all())
+    current_rating_map = {rating.player_id: rating.current_rating for rating in current_ratings}
+
     # Get third-time attendees
     third_time_result = await db.execute(
         select(ThirdTimeAttendance)
@@ -79,11 +87,14 @@ async def get_match_details(
         player_details = []
         for team_player in team.players:
             player_rating = rating_map.get(team_player.player_id)
+            player_current_rating = current_rating_map.get(team_player.player_id)
             player_details.append(
                 MatchPlayerDetail(
                     id=team_player.player_id,
                     name=team_player.player.name,
                     rating=player_rating,
+                    current_rating=player_current_rating,
+                    player_type=team_player.player.player_type,
                     position=team_player.position,
                 )
             )
