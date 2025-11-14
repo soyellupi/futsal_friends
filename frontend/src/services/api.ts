@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
   },
   matches: {
     bySeasonWeek: (year: number, week: number) => `${API_BASE_URL}/api/v1/seasons/${year}/matches/${week}`,
+    attendance: (year: number, week: number) => `${API_BASE_URL}/api/v1/seasons/${year}/matches/${week}/attendance`,
   },
 } as const;
 

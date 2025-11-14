@@ -78,3 +78,28 @@ class PlayerAttendanceSummary(BaseModel):
     current_rating: Optional[float] = Field(None, description="Player's current rating")
 
     model_config = {"from_attributes": True}
+
+
+class PlayerAttendanceDetail(BaseModel):
+    """Detailed player attendance information"""
+
+    player_id: UUID
+    player_name: str
+    player_type: str
+    rsvp_status: Optional[RSVPStatus] = None
+    attended: Optional[bool] = None
+    current_rating: Optional[float] = Field(None, description="Player's current rating")
+
+    model_config = {"from_attributes": True}
+
+
+class MatchAttendanceListResponse(BaseModel):
+    """Response for match attendance list"""
+
+    match_id: UUID
+    match_week: int
+    match_date: datetime
+    regular_players: list[PlayerAttendanceDetail]
+    invited_players: list[PlayerAttendanceDetail]
+
+    model_config = {"from_attributes": True}

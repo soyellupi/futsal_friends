@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.database import get_db
-from app.models import Player, PlayerMatchRating, PlayerSeasonRating, Team, TeamPlayer, ThirdTimeAttendance
+from app.models import MatchAttendance, Player, PlayerMatchRating, PlayerSeasonRating, Team, TeamPlayer, ThirdTimeAttendance
+from app.models.player import PlayerType
 from app.repositories.match import MatchRepository
+from app.schemas.attendance import MatchAttendanceListResponse, PlayerAttendanceDetail
 from app.schemas.match import (
     MatchDetailResponse,
     MatchPlayerDetail,
@@ -131,4 +133,69 @@ async def get_match_details(
         updated_at=match.updated_at,
         teams=team_details,
         third_time_attendees=third_time_attendees,
+    )
+
+
+@router.get("/{year}/matches/{match_week}/attendance", response_model=MatchAttendanceListResponse)
+async def get_match_attendance(
+    year: int,
+    match_week: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get attendance list for a match (regular and invited players)"""
+    match_repo = MatchRepository(db)
+
+    # Get match by season year and match week
+    match = await match_repo.get_by_season_year_and_week(year, match_week)
+    if not match:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Match not found for year {year} week {match_week}"
+        )
+
+    # Get all match attendances with player data
+    attendances_result = await db.execute(
+        select(MatchAttendance)
+        .where(MatchAttendance.match_id == match.id)
+        .options(joinedload(MatchAttendance.player))
+    )
+    attendances = list(attendances_result.scalars().unique().all())
+
+    # Get current season ratings for all players
+    current_ratings_result = await db.execute(
+        select(PlayerSeasonRating)
+        .where(PlayerSeasonRating.season_id == match.season_id)
+    )
+    current_ratings = list(current_ratings_result.scalars().all())
+    current_rating_map = {rating.player_id: rating.current_rating for rating in current_ratings}
+
+    # Separate regular and invited players
+    regular_players = []
+    invited_players = []
+
+    for attendance in attendances:
+        player_detail = PlayerAttendanceDetail(
+            player_id=attendance.player.id,
+            player_name=attendance.player.name,
+            player_type=attendance.player.player_type.value,
+            rsvp_status=attendance.rsvp_status,
+            attended=attendance.attended,
+            current_rating=current_rating_map.get(attendance.player.id),
+        )
+
+        if attendance.player.player_type == PlayerType.REGULAR:
+            regular_players.append(player_detail)
+        else:
+            invited_players.append(player_detail)
+
+    # Sort by name
+    regular_players.sort(key=lambda p: p.player_name)
+    invited_players.sort(key=lambda p: p.player_name)
+
+    return MatchAttendanceListResponse(
+        match_id=match.id,
+        match_week=match.match_week,
+        match_date=match.match_date,
+        regular_players=regular_players,
+        invited_players=invited_players,
     )

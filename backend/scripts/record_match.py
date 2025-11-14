@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
-from app.models import Match, MatchStatus, Player, Season, Team, TeamPlayer
+from app.models import Match, MatchAttendance, MatchStatus, Player, RSVPStatus, Season, Team, TeamPlayer
 from app.models.player import PlayerType
 from app.models.team import TeamName
 from app.repositories import (
@@ -254,6 +254,32 @@ async def prompt_select_invited_players(
 
     print_success(f"\nTotal invited players selected: {len(selected_players)}")
     return selected_players
+
+
+async def record_player_attendance(
+    db: AsyncSession,
+    match: Match,
+    players: List[Player],
+    match_repo: MatchRepository
+) -> None:
+    """Record attendance for all selected players"""
+    print_header("Recording Player Attendance")
+
+    print_info(f"\nRecording attendance for {len(players)} players...")
+
+    for player in players:
+        # Create attendance record with confirmed RSVP and attended=True
+        attendance = MatchAttendance(
+            match_id=match.id,
+            player_id=player.id,
+            rsvp_status=RSVPStatus.CONFIRMED,
+            rsvp_at=datetime.now(),
+            attended=True,
+        )
+        await match_repo.create_attendance(attendance)
+        print_success(f"✓ Recorded attendance for {player.name}")
+
+    print_success(f"\n✓ Attendance recorded for all {len(players)} players")
 
 
 async def prompt_select_goalkeepers(
@@ -552,13 +578,16 @@ async def main():
 
         print_success(f"\nTotal players: {len(all_players)}")
 
-        # Step 5: Select goalkeepers
+        # Step 5: Record attendance for all selected players
+        await record_player_attendance(db, match, all_players, match_repo)
+
+        # Step 6: Select goalkeepers
         goalkeepers = await prompt_select_goalkeepers(all_players)
 
-        # Get player ratings
+        # Step 7: Get player ratings
         player_ratings = await get_player_ratings(db, season, all_players, season_repo)
 
-        # Step 6: Create teams (manual or automatic)
+        # Step 8: Create teams (manual or automatic)
         print_header("Create Teams")
         print_info("How would you like to create teams?")
         print_info("1. Automatic (balanced by rating)")
