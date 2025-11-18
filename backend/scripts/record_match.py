@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
-from app.models import Match, MatchAttendance, MatchStatus, Player, RSVPStatus, Season, Team, TeamPlayer
+from app.models import Match, MatchAttendance, MatchStatus, Player, Season, Team, TeamPlayer
 from app.models.player import PlayerType
 from app.models.team import TeamName
 from app.repositories import (
@@ -268,12 +268,10 @@ async def record_player_attendance(
     print_info(f"\nRecording attendance for {len(players)} players...")
 
     for player in players:
-        # Create attendance record with confirmed RSVP and attended=True
+        # Create attendance record with attended=True
         attendance = MatchAttendance(
             match_id=match.id,
             player_id=player.id,
-            rsvp_status=RSVPStatus.CONFIRMED,
-            rsvp_at=datetime.now(),
             attended=True,
         )
         await match_repo.create_attendance(attendance)

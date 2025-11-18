@@ -1,7 +1,7 @@
 """SQLAlchemy models package"""
 
 from app.database import Base
-from app.models.attendance import MatchAttendance, RSVPStatus, ThirdTimeAttendance
+from app.models.attendance import MatchAttendance, ThirdTimeAttendance
 from app.models.match import Match, MatchStatus
 from app.models.player import Player
 from app.models.rating import MatchResultOutcome, PlayerMatchRating
@@ -21,7 +21,6 @@ __all__ = [
     "MatchStatus",
     # Attendance
     "MatchAttendance",
-    "RSVPStatus",
     "ThirdTimeAttendance",
     # Team
     "Team",

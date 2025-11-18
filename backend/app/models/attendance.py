@@ -1,27 +1,17 @@
 """Attendance models for matches and third time"""
 
-import enum
 import uuid
 from datetime import datetime
-from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
 
-class RSVPStatus(str, enum.Enum):
-    """RSVP status enum"""
-
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    DECLINED = "declined"
-
-
 class MatchAttendance(Base):
-    """Match attendance and RSVP tracking"""
+    """Match attendance tracking"""
 
     __tablename__ = "match_attendances"
 
@@ -40,12 +30,6 @@ class MatchAttendance(Base):
         nullable=False,
         index=True,
     )
-    rsvp_status: Mapped[RSVPStatus] = mapped_column(
-        Enum(RSVPStatus, name="rsvp_status"),
-        default=RSVPStatus.PENDING,
-        nullable=False,
-    )
-    rsvp_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     attended: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
@@ -66,7 +50,7 @@ class MatchAttendance(Base):
     def __repr__(self) -> str:
         return (
             f"<MatchAttendance(match_id={self.match_id}, player_id={self.player_id}, "
-            f"rsvp={self.rsvp_status.value}, attended={self.attended})>"
+            f"attended={self.attended})>"
         )
 
 

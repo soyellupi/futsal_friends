@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models import Match, MatchAttendance, MatchStatus, RSVPStatus, Season, ThirdTimeAttendance
+from app.models import Match, MatchAttendance, MatchStatus, Season, ThirdTimeAttendance
 from app.repositories.base import BaseRepository
 
 
@@ -124,11 +124,11 @@ class MatchRepository(BaseRepository[Match]):
         return list(result.scalars().all())
 
     async def get_confirmed_attendees(self, match_id: UUID) -> List[MatchAttendance]:
-        """Get players who confirmed attendance"""
+        """Get players who attended the match"""
         result = await self.db.execute(
             select(MatchAttendance).where(
                 MatchAttendance.match_id == match_id,
-                MatchAttendance.rsvp_status == RSVPStatus.CONFIRMED,
+                MatchAttendance.attended == True,
             )
         )
         return list(result.scalars().all())

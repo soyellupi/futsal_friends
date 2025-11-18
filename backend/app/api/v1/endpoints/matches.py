@@ -178,10 +178,12 @@ async def get_match_attendance(
             player_id=attendance.player.id,
             player_name=attendance.player.name,
             player_type=attendance.player.player_type.value,
-            rsvp_status=attendance.rsvp_status,
             attended=attendance.attended,
             current_rating=current_rating_map.get(attendance.player.id),
         )
+
+        if not attendance.player.is_active:
+          continue 
 
         if attendance.player.player_type == PlayerType.REGULAR:
             regular_players.append(player_detail)

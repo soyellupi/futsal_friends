@@ -183,15 +183,14 @@ class MatchStatus(str, enum.Enum):
 
 **File**: `app/models/attendance.py`
 
-Tracks RSVP and actual attendance.
+Tracks match attendance.
 
 ```python
-from app.models import MatchAttendance, RSVPStatus
+from app.models import MatchAttendance
 
 attendance = MatchAttendance(
     match_id=match_id,
     player_id=player_id,
-    rsvp_status=RSVPStatus.CONFIRMED,
     attended=True
 )
 
@@ -199,18 +198,6 @@ attendance = MatchAttendance(
 attendance.match    # Match
 attendance.player   # Player
 ```
-
-**RSVP Status Enum:**
-```python
-class RSVPStatus(str, enum.Enum):
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    DECLINED = "declined"
-```
-
-**Two-Phase Tracking:**
-1. **Before match**: `rsvp_status` tracks commitment
-2. **After match**: `attended` tracks actual participation
 
 ---
 

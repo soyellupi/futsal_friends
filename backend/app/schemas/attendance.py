@@ -6,8 +6,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.models.attendance import RSVPStatus
-
 
 class MatchAttendanceBase(BaseModel):
     """Base match attendance schema"""
@@ -19,15 +17,12 @@ class MatchAttendanceBase(BaseModel):
 class MatchAttendanceCreate(MatchAttendanceBase):
     """Schema for creating match attendance"""
 
-    rsvp_status: RSVPStatus = Field(
-        RSVPStatus.PENDING, description="RSVP status"
-    )
+    attended: bool = Field(False, description="Whether player attended")
 
 
 class MatchAttendanceUpdate(BaseModel):
     """Schema for updating match attendance"""
 
-    rsvp_status: Optional[RSVPStatus] = Field(None, description="RSVP status")
     attended: Optional[bool] = Field(None, description="Whether player attended")
 
 
@@ -35,8 +30,6 @@ class MatchAttendanceResponse(MatchAttendanceBase):
     """Schema for match attendance response"""
 
     id: UUID
-    rsvp_status: RSVPStatus
-    rsvp_at: Optional[datetime]
     attended: bool
     created_at: datetime
     updated_at: datetime
@@ -72,7 +65,6 @@ class PlayerAttendanceSummary(BaseModel):
 
     player_id: UUID
     player_name: str
-    rsvp_status: RSVPStatus
     match_attended: bool
     third_time_attended: bool
     current_rating: Optional[float] = Field(None, description="Player's current rating")
@@ -86,7 +78,6 @@ class PlayerAttendanceDetail(BaseModel):
     player_id: UUID
     player_name: str
     player_type: str
-    rsvp_status: Optional[RSVPStatus] = None
     attended: Optional[bool] = None
     current_rating: Optional[float] = Field(None, description="Player's current rating")
 

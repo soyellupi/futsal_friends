@@ -162,7 +162,7 @@ Weekly futsal match.
 
 ### 5. MatchAttendance
 
-RSVP and actual attendance tracking.
+Match attendance tracking.
 
 **Columns:**
 | Column | Type | Constraints | Description |
@@ -170,14 +170,9 @@ RSVP and actual attendance tracking.
 | id | UUID | PK | Attendance record identifier |
 | match_id | UUID | FK → Match, NOT NULL, Indexed | Match reference |
 | player_id | UUID | FK → Player, NOT NULL, Indexed | Player reference |
-| rsvp_status | ENUM | NOT NULL, Default: 'pending' | RSVP status |
-| rsvp_at | TIMESTAMP | NULL | RSVP timestamp |
 | attended | BOOLEAN | NOT NULL, Default: false | Actual attendance |
 | created_at | TIMESTAMP | NOT NULL | Record creation time |
 | updated_at | TIMESTAMP | NOT NULL | Last update time |
-
-**Enums:**
-- **rsvp_status**: pending, confirmed, declined
 
 **Constraints:**
 - Unique constraint on (match_id, player_id)
@@ -187,7 +182,6 @@ RSVP and actual attendance tracking.
 - Many-to-one with `Player`
 
 **Business Rules:**
-- rsvp_status tracks commitment before match
 - attended tracks actual participation
 - Only attended players can be assigned to teams
 

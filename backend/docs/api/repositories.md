@@ -199,15 +199,15 @@ upcoming = await match_repo.get_upcoming_matches(season_id)
 match = await match_repo.get_match_with_details(match_id)
 # match.attendances, match.teams, match.result all loaded
 
-# RSVP for match
+# Record attendance for match
 attendance = MatchAttendance(
     match_id=match_id,
     player_id=player_id,
-    rsvp_status=RSVPStatus.CONFIRMED
+    attended=True
 )
 await match_repo.create_attendance(attendance)
 
-# Get confirmed attendees
+# Get attendees
 confirmed = await match_repo.get_confirmed_attendees(match_id)
 ```
 
