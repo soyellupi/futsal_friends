@@ -74,39 +74,6 @@ export function LeaderboardPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <LeaderboardTable data={leaderboardData} />
         </div>
-
-        {/* Legend */}
-        <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-            Legend
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-600 dark:text-gray-400">Played:</span>
-              <span className="text-gray-900 dark:text-white font-medium">Matches completed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-green-600 dark:text-green-400 font-semibold">Won:</span>
-              <span className="text-gray-900 dark:text-white">Matches won</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-600 dark:text-gray-400">Draw:</span>
-              <span className="text-gray-900 dark:text-white">Matches drawn</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-red-600 dark:text-red-400">Lost:</span>
-              <span className="text-gray-900 dark:text-white">Matches lost</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-blue-600 dark:text-blue-400">3rd Time:</span>
-              <span className="text-gray-900 dark:text-white">Attended as substitute</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-primary-600 dark:text-primary-400 font-bold">Points:</span>
-              <span className="text-gray-900 dark:text-white">Total ranking points</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

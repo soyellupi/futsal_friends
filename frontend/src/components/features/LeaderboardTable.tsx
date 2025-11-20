@@ -22,17 +22,17 @@ function getRankBadge(rank: number) {
     );
   }
 
-  if (rank === 2) {
+  if (rank >= 2 && rank <= 7) {
     return (
-      <div className={clsx(baseClasses, 'bg-gray-300 text-gray-800')}>
+      <div className={clsx(baseClasses, 'bg-green-300 text-green-800')}>
         {rank}
       </div>
     );
   }
 
-  if (rank === 3) {
+  if (rank > 7) {
     return (
-      <div className={clsx(baseClasses, 'bg-orange-400 text-orange-900')}>
+      <div className={clsx(baseClasses, 'bg-red-400 text-red-900')}>
         {rank}
       </div>
     );
@@ -61,12 +61,12 @@ export function LeaderboardTable({ data, className }: LeaderboardTableProps) {
           <TableRow isHeader>
             <TableCell variant="header" align="center">Rank</TableCell>
             <TableCell variant="header" align="left">Player</TableCell>
+            <TableCell variant="header" align="center">Points</TableCell>
             <TableCell variant="header" align="center">Played</TableCell>
             <TableCell variant="header" align="center">Won</TableCell>
             <TableCell variant="header" align="center">Draw</TableCell>
             <TableCell variant="header" align="center">Lost</TableCell>
             <TableCell variant="header" align="center">3rd Time</TableCell>
-            <TableCell variant="header" align="center">Points</TableCell>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -80,8 +80,11 @@ export function LeaderboardTable({ data, className }: LeaderboardTableProps) {
                   <div className="truncate">{entry.player_stats.player_name}</div>
                 </div>
               </TableCell>
+              <TableCell align="center" className="font-bold text-primary-600 dark:text-primary-400">
+                {entry.player_stats.total_points}
+              </TableCell>
               <TableCell align="center">
-                {entry.player_stats.matches_completed}
+                {entry.player_stats.matches_attended}
               </TableCell>
               <TableCell align="center" className="text-green-600 dark:text-green-400 font-semibold">
                 {entry.player_stats.wins}
@@ -94,9 +97,6 @@ export function LeaderboardTable({ data, className }: LeaderboardTableProps) {
               </TableCell>
               <TableCell align="center" className="text-blue-600 dark:text-blue-400">
                 {entry.player_stats.third_time_attended}
-              </TableCell>
-              <TableCell align="center" className="font-bold text-primary-600 dark:text-primary-400">
-                {entry.player_stats.total_points}
               </TableCell>
             </TableRow>
           ))}

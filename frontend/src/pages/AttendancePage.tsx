@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useAttendance } from '../hooks/useAttendance';
-import type { PlayerAttendanceDetail, RSVPStatus } from '../types/attendance.types';
+import type { PlayerAttendanceDetail } from '../types/attendance.types';
 
 function formatMatchDate(dateString: string): string {
   const date = new Date(dateString);
@@ -14,8 +14,8 @@ function formatMatchDate(dateString: string): string {
   }).format(date);
 }
 
-function getRSVPStatusBadge(status: RSVPStatus | null) {
-  if (!status) {
+function getAttendedBadge(attended: boolean | null) {
+  if (attended === null) {
     return (
       <span className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded">
         N/A
@@ -23,16 +23,17 @@ function getRSVPStatusBadge(status: RSVPStatus | null) {
     );
   }
 
-  const statusColors = {
-    confirmed: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-    declined: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
-    pending: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-    tentative: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-  };
+  if (attended) {
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">
+        Yes
+      </span>
+    );
+  }
 
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded ${statusColors[status]}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+    <span className="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded">
+      No
     </span>
   );
 }
@@ -75,7 +76,7 @@ function PlayerList({ players, title }: PlayerListProps) {
                 Name
               </th>
               <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                RSVP Status
+                Attended
               </th>
               <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Rating
@@ -91,7 +92,7 @@ function PlayerList({ players, title }: PlayerListProps) {
                   </div>
                 </td>
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                  {getRSVPStatusBadge(player.rsvp_status)}
+                  {getAttendedBadge(player.attended)}
                 </td>
                 <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                   <span className="text-sm text-gray-900 dark:text-white font-semibold">
@@ -167,22 +168,22 @@ export function AttendancePage() {
         {/* Summary Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Regular Players confirmed</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Regular Players attended</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {attendance.regular_players.filter(p => p.rsvp_status === 'confirmed').length}
+              {attendance.regular_players.filter(p => p.attended === true).length}
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Invited Players confirmed</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Invited Players attended</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {attendance.invited_players.filter(p => p.rsvp_status === 'confirmed').length}
+              {attendance.invited_players.filter(p => p.attended === true).length}
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Players confirmed</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Players attended</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {attendance.regular_players.filter(p => p.rsvp_status === 'confirmed').length +
-               attendance.invited_players.filter(p => p.rsvp_status === 'confirmed').length}
+              {attendance.regular_players.filter(p => p.attended === true).length +
+               attendance.invited_players.filter(p => p.attended === true).length}
             </div>
           </div>
         </div>
