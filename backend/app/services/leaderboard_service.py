@@ -43,7 +43,7 @@ class LeaderboardService:
             player = result.scalar_one()
 
             # Skip invited players from leaderboard
-            if player.player_type == PlayerType.INVITED:
+            if player.player_type == PlayerType.INVITED or not player.is_active:
                 continue
 
             # Get player match ratings for statistics

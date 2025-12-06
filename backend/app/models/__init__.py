@@ -3,7 +3,7 @@
 from app.database import Base
 from app.models.attendance import MatchAttendance, ThirdTimeAttendance
 from app.models.match import Match, MatchStatus
-from app.models.player import Player
+from app.models.player import Player, PlayerType
 from app.models.rating import MatchResultOutcome, PlayerMatchRating
 from app.models.result import MatchResult, ResultType
 from app.models.season import PlayerSeasonRating, Season
@@ -13,6 +13,7 @@ __all__ = [
     "Base",
     # Player
     "Player",
+    "PlayerType",
     # Season
     "Season",
     "PlayerSeasonRating",
