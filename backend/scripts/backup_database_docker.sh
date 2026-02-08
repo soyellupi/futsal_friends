@@ -12,7 +12,7 @@ CONTAINER_NAME="futsal_postgres"  # Change this if your container has a differen
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Backup directory
-BACKUP_DIR="/Users/francisco/dev/ai-apps/futsal_friends/backend/db_backups"
+BACKUP_DIR="/Users/francisco/dev/futsal_friends/backend/db_backups"
 mkdir -p "$BACKUP_DIR"
 
 # Backup filename

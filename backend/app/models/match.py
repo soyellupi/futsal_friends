@@ -19,6 +19,7 @@ class MatchStatus(str, enum.Enum):
     CONFIRMED = "confirmed"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    UNPLAYABLE = "unplayable"
 
 
 class Match(Base):

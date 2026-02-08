@@ -126,7 +126,8 @@ def find_player_by_name(players: List[Player], name_input: str) -> Optional[Play
 async def prompt_create_match(
     db: AsyncSession,
     season: Season,
-    match_repo: MatchRepository
+    match_repo: MatchRepository,
+    is_unplayable: bool = False
 ) -> Match:
     """Prompt user to create a match"""
     print_header("Create Match")
@@ -145,7 +146,7 @@ async def prompt_create_match(
 
     # Get match date
     while True:
-        date_str = input("\nMatch date (YYYY-MM-DD HH:MM) or press Enter for today: ").strip()
+        date_str = input("\nMatch date (YYYY-MM-DD HH:MM) or press Enter for now: ").strip()
         if date_str == "":
             match_date = datetime.now()
             break
@@ -155,16 +156,29 @@ async def prompt_create_match(
         except ValueError:
             print_error("Invalid date format. Use YYYY-MM-DD HH:MM")
 
+    # For unplayable matches, get optional location and notes
+    location = None
+    notes = None
+    if is_unplayable:
+        location = input("Location (optional): ").strip() or None
+        notes = input("Reason why unplayable (optional): ").strip() or None
+
+    # Determine status
+    status = MatchStatus.UNPLAYABLE if is_unplayable else MatchStatus.SCHEDULED
+
     # Create match
     match = Match(
         season_id=season.id,
         match_week=next_week,
         match_date=match_date,
-        status=MatchStatus.SCHEDULED,
+        status=status,
+        location=location,
+        notes=notes,
     )
     match = await match_repo.create(match)
 
-    print_success(f"\n✓ Match created: Week {next_week} on {match_date.strftime('%Y-%m-%d %H:%M')}")
+    status_str = "UNPLAYABLE" if is_unplayable else "SCHEDULED"
+    print_success(f"\n✓ Match created: Week {next_week} on {match_date.strftime('%Y-%m-%d %H:%M')} ({status_str})")
     return match
 
 
@@ -539,7 +553,7 @@ async def get_player_ratings(
 
 async def main():
     """Main function"""
-    print_header("Record Match - Create Match and Teams")
+    print_header("Record Match")
 
     async with AsyncSessionLocal() as db:
         # Get active season
@@ -553,9 +567,38 @@ async def main():
         season_repo = SeasonRepository(db)
         team_repo = TeamRepository(db)
 
-        # Step 1: Create match
-        match = await prompt_create_match(db, season, match_repo)
+        # Ask if match was playable
+        print_info("\nWas the match played?")
+        print_info("  1. Yes - record match with teams and result")
+        print_info("  2. No  - record as unplayable (weather, too few players, etc.)")
 
+        while True:
+            playable_choice = input("\nChoice (1/2): ").strip()
+            if playable_choice in ['1', '2']:
+                break
+            print_error("Invalid choice. Enter 1 or 2.")
+
+        is_unplayable = playable_choice == '2'
+
+        # Step 1: Create match
+        match = await prompt_create_match(db, season, match_repo, is_unplayable)
+
+        # If unplayable, we're done - just commit and exit
+        if is_unplayable:
+            await db.commit()
+
+            print_success("\n" + "=" * 80)
+            print_success("✓ Unplayable match recorded successfully!")
+            print_success("=" * 80)
+            print_info(f"\nMatch ID: {match.id}")
+            print_info(f"Match Week: {match.match_week}")
+            print_info(f"Date: {match.match_date.strftime('%Y-%m-%d %H:%M')}")
+            print_info(f"Status: UNPLAYABLE")
+            print_info("\nTo record third time attendance, use:")
+            print_info("  python scripts/record_third_time_attendance.py")
+            return
+
+        # Continue with normal match flow
         # Step 2: Get available players
         regular_players = await get_regular_players(db)
         invited_players = await get_invited_players(db)

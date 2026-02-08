@@ -28,6 +28,7 @@ The leaderboard provides a comprehensive view of player performance throughout a
 ### 5. Third Time Attendance
 - **Definition**: Post-match social gatherings attended
 - **Points**: 1 point per third time
+- **Note**: Includes attendance from both completed and unplayable matches
 
 ### 6. Current Rating
 - **Definition**: Player's current skill rating (1.0 - 5.0)
@@ -151,7 +152,21 @@ match_ratings = [
 wins = count(match_result == "win")
 draws = count(match_result == "draw")
 losses = count(match_result == "loss")
-third_time_attended = count(attended_third_time == True)
+third_time_from_matches = count(attended_third_time == True)
+```
+
+### ThirdTimeAttendance (for Unplayable Matches)
+
+```python
+# Third time from unplayable matches (no PlayerMatchRating exists)
+unplayable_third_time = ThirdTimeAttendance.query(
+    match.status == "unplayable",
+    match.season_id == season_id,
+    attended == True
+)
+
+# Total third time
+third_time_attended = third_time_from_matches + len(unplayable_third_time)
 ```
 
 ## Implementation
@@ -176,7 +191,8 @@ class LeaderboardService:
         # For each player:
         #   - Query PlayerMatchRating records
         #   - Count wins, draws, losses
-        #   - Count third time attendance
+        #   - Count third time from completed matches (PlayerMatchRating)
+        #   - Count third time from unplayable matches (ThirdTimeAttendance)
         #   - Calculate total points
         #   - Calculate attendance rate
         # Sort by points and rating

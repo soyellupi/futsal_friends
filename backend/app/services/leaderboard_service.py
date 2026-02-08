@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants import PointsConfig
 from app.models import (
+    Match,
     MatchResultOutcome,
     Player,
     PlayerMatchRating,
     PlayerSeasonRating,
     ThirdTimeAttendance,
 )
+from app.models.match import MatchStatus
 from app.models.player import PlayerType
 from app.repositories import SeasonRepository
 from app.schemas.leaderboard import PlayerStats
@@ -72,7 +74,25 @@ class LeaderboardService:
                 for r in match_ratings
                 if r.match_result == MatchResultOutcome.LOSS
             )
-            third_time_attended = sum(1 for r in match_ratings if r.attended_third_time)
+
+            # Third time from normal matches (via PlayerMatchRating)
+            third_time_from_matches = sum(1 for r in match_ratings if r.attended_third_time)
+
+            # Third time from unplayable matches (via ThirdTimeAttendance)
+            unplayable_third_time_result = await self.db.execute(
+                select(ThirdTimeAttendance)
+                .join(Match)
+                .where(
+                    ThirdTimeAttendance.player_id == season_rating.player_id,
+                    Match.season_id == season_id,
+                    Match.status == MatchStatus.UNPLAYABLE,
+                    ThirdTimeAttendance.attended == True,
+                )
+            )
+            third_time_from_unplayable = len(list(unplayable_third_time_result.scalars().all()))
+
+            # Total third time attended
+            third_time_attended = third_time_from_matches + third_time_from_unplayable
 
             # Calculate total points
             total_points = (
@@ -171,7 +191,24 @@ class LeaderboardService:
         if player.player_type == PlayerType.INVITED:
             third_time_attended = 0
         else:
-            third_time_attended = sum(1 for r in match_ratings if r.attended_third_time)
+            # Third time from normal matches (via PlayerMatchRating)
+            third_time_from_matches = sum(1 for r in match_ratings if r.attended_third_time)
+
+            # Third time from unplayable matches (via ThirdTimeAttendance)
+            unplayable_third_time_result = await self.db.execute(
+                select(ThirdTimeAttendance)
+                .join(Match)
+                .where(
+                    ThirdTimeAttendance.player_id == player_id,
+                    Match.season_id == season_id,
+                    Match.status == MatchStatus.UNPLAYABLE,
+                    ThirdTimeAttendance.attended == True,
+                )
+            )
+            third_time_from_unplayable = len(list(unplayable_third_time_result.scalars().all()))
+
+            # Total third time attended
+            third_time_attended = third_time_from_matches + third_time_from_unplayable
 
         # Calculate total points
         total_points = (

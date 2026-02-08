@@ -331,6 +331,35 @@ new_rating = 1.1 - 0.3 = 0.8
 clamped_rating = max(1.0, 0.8) = 1.0  # Hits floor
 ```
 
+### Case 5: Unplayable Match
+
+When a match cannot be played (weather, too few players, etc.), it can be marked as `UNPLAYABLE`:
+
+```
+Match Week 5: status = UNPLAYABLE
+
+Effects:
+- No PlayerMatchRating records created
+- No rating changes for any player
+- No penalties for non-attendance
+- matches_completed NOT incremented
+- Third time attendance CAN still be recorded
+- Third time points count for leaderboard
+```
+
+**Comparison with other statuses:**
+
+| Aspect | COMPLETED | UNPLAYABLE | CANCELLED |
+|--------|-----------|------------|-----------|
+| Teams created | Yes | No | No |
+| Result recorded | Yes | No | No |
+| Ratings calculated | Yes | No | No |
+| Non-attendance penalty | Yes (-0.2) | No | No |
+| Third time attendance | Yes | Yes | No |
+| Third time bonus (rating) | +0.05 | No (no ratings) | No |
+| Third time points (leaderboard) | +1 | +1 | No |
+| Occupies match_week | Yes | Yes | Yes |
+
 ## Implementation
 
 ### RatingService
@@ -355,7 +384,14 @@ class RatingService:
 
         Returns:
             List[PlayerMatchRating]: Rating records for all players
+
+        Raises:
+            ValueError: If match status is UNPLAYABLE
         """
+        # Reject unplayable matches
+        if match.status == MatchStatus.UNPLAYABLE:
+            raise ValueError("Cannot calculate ratings for unplayable match")
+
         # For each season player:
         # 1. Determine if they attended
         # 2. Get their match outcome

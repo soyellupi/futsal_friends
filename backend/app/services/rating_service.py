@@ -17,6 +17,7 @@ from app.models import (
     Team,
     TeamPlayer,
 )
+from app.models.match import MatchStatus
 from app.models.player import PlayerType
 from app.repositories import RatingRepository, SeasonRepository, TeamRepository
 
@@ -46,7 +47,15 @@ class RatingService:
         """
         Calculate ratings for all season players after a match.
         This includes players who didn't attend (they get penalties).
+
+        Raises ValueError if match status is UNPLAYABLE.
         """
+        # Reject rating calculation for unplayable matches
+        if match.status == MatchStatus.UNPLAYABLE:
+            raise ValueError(
+                f"Cannot calculate ratings for unplayable match (week {match.match_week}). "
+                "Unplayable matches don't affect player ratings."
+            )
         # Get team rosters
         team_a_players = await self.team_repo.get_team_players(team_a.id)
         team_b_players = await self.team_repo.get_team_players(team_b.id)

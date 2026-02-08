@@ -326,6 +326,19 @@ def downgrade():
     ENUM(name='status_type').drop(op.get_bind(), checkfirst=True)
 ```
 
+### Add Value to Existing Enum
+
+```python
+def upgrade():
+    # Add new value to existing enum (PostgreSQL)
+    op.execute("ALTER TYPE match_status ADD VALUE 'unplayable'")
+
+def downgrade():
+    # Note: PostgreSQL doesn't support removing enum values directly
+    # Would require recreating the enum type and updating all references
+    pass
+```
+
 ## Troubleshooting
 
 ### Migration Won't Apply

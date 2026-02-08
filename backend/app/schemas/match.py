@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from app.models.match import MatchStatus
 from app.models.player import PlayerType
@@ -45,6 +45,12 @@ class MatchResponse(MatchBase):
     rsvp_deadline: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+
+    @computed_field
+    @property
+    def is_unplayable(self) -> bool:
+        """Check if match is unplayable"""
+        return self.status == MatchStatus.UNPLAYABLE
 
     model_config = {"from_attributes": True}
 

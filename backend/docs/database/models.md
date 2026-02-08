@@ -167,6 +167,7 @@ class MatchStatus(str, enum.Enum):
     CONFIRMED = "confirmed"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    UNPLAYABLE = "unplayable"
 ```
 
 **Workflow:**
@@ -176,6 +177,13 @@ class MatchStatus(str, enum.Enum):
 4. Match is played, result recorded
 5. Status changes to COMPLETED
 6. Ratings calculated for all season players
+
+**Alternative Flow (Unplayable):**
+1. Match created with status=SCHEDULED
+2. Match cannot be played (weather, too few players, etc.)
+3. Status changes to UNPLAYABLE
+4. No teams, result, or ratings are recorded
+5. Third time attendance can still be recorded and counts for leaderboard points
 
 ---
 
@@ -326,7 +334,8 @@ third_time.player   # Player
 **Key Points:**
 - Independent from match attendance
 - Players can attend third time even if they didn't play
-- Provides +0.05 rating bonus
+- Provides +0.05 rating bonus (for completed matches)
+- Can be recorded for UNPLAYABLE matches (counts for leaderboard points, no rating bonus)
 
 ---
 
@@ -375,7 +384,8 @@ class MatchResultOutcome(str, enum.Enum):
 ```
 
 **Key Points:**
-- Created for **ALL season players** after each match
+- Created for **ALL season players** after each completed match
+- NOT created for UNPLAYABLE matches (no ratings calculated)
 - Stores complete calculation details for transparency
 - `rating_change = 0` for first 3 matches
 - Used to calculate current rating from last 3 matches

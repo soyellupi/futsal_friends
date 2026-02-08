@@ -18,6 +18,7 @@ from sqlalchemy.orm import joinedload
 
 from app.database import AsyncSessionLocal
 from app.models import Match, Player, PlayerMatchRating, PlayerSeasonRating, Season
+from app.models.match import MatchStatus
 from app.models.player import PlayerType
 from app.repositories import RatingRepository, SeasonRepository, TeamRepository
 from app.services.rating_service import RatingService
@@ -154,12 +155,47 @@ async def recalculate_match_ratings(match_week: int):
         print_info(f"Match ID: {match.id}")
         print_info(f"Status: {match.status.value}")
 
-        # Check if match has a result
+        # Handle unplayable matches specially
+        is_unplayable = match.status == MatchStatus.UNPLAYABLE
+
+        if is_unplayable:
+            print_info("\nMatch is UNPLAYABLE - no ratings will be calculated.")
+            print_info("Season ratings will be reset to state before this match.")
+
+            # Confirm
+            print_info("\n" + "=" * 80)
+            confirm = input(f"Reset season ratings for unplayable match week {match_week}? (yes/no): ").strip().lower()
+
+            if confirm != 'yes':
+                print_error("Cancelled.")
+                return
+
+            # Delete any existing ratings for this match (there shouldn't be any)
+            print_info("\nDeleting any existing ratings...")
+            deleted_count = await delete_match_ratings(db, match.id)
+            if deleted_count > 0:
+                print_success(f"Deleted {deleted_count} rating records")
+            else:
+                print_info("No existing ratings to delete.")
+
+            # Reset season ratings to state before this match
+            print_info("\nResetting season ratings to state before this match...")
+            await reset_season_ratings(db, match.season_id, match_week)
+
+            # Commit changes
+            await db.commit()
+
+            print_success("\n" + "=" * 80)
+            print_success("✓ Season ratings reset successfully!")
+            print_success("  (No player ratings created for unplayable match)")
+            print_success("=" * 80)
+            return
+
+        # For normal matches, check requirements
         if not match.result:
             print_error("Match has no result. Cannot calculate ratings.")
             return
 
-        # Check if match has teams
         if len(match.teams) != 2:
             print_error(f"Expected 2 teams, found {len(match.teams)}")
             return

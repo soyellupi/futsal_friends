@@ -144,7 +144,7 @@ Weekly futsal match.
 | updated_at | TIMESTAMP | NOT NULL | Last update time |
 
 **Enums:**
-- **status**: scheduled, confirmed, completed, cancelled
+- **status**: scheduled, confirmed, completed, cancelled, unplayable
 
 **Relationships:**
 - Many-to-one with `Season`
@@ -157,6 +157,8 @@ Weekly futsal match.
 **Business Rules:**
 - Must have exactly 2 teams when status = 'completed'
 - Must have result when status = 'completed'
+- UNPLAYABLE matches have no teams, result, or player ratings
+- UNPLAYABLE matches can still have third time attendance
 
 ---
 
@@ -302,7 +304,8 @@ Post-match social gathering attendance.
 **Business Rules:**
 - Independent from match attendance
 - Players can attend third time even if they didn't play
-- Provides bonus rating points
+- Provides bonus rating points (for completed matches)
+- Can be recorded for UNPLAYABLE matches (counts for leaderboard points)
 
 ---
 
@@ -350,7 +353,8 @@ Complete rating history for each player at each match.
 - Many-to-one with `Season`
 
 **Business Rules:**
-- Created for ALL season players after each match
+- Created for ALL season players after each completed match
+- NOT created for UNPLAYABLE matches
 - rating_change = 0 for first 3 matches
 - Non-attendees get penalty recorded
 - Full transparency on rating calculation
@@ -397,5 +401,9 @@ Key indexes for performance:
 | Version | Date | Description |
 |---------|------|-------------|
 | 0a8702210b54 | 2025-11-01 | Initial database schema with all 10 tables |
+| 6058a914c2b8 | 2025-11-08 | Add match_week column to matches |
+| 2270fe0f8d73 | 2025-11-08 | Add player_type to players |
+| efb10028c48c | 2025-11-14 | Remove RSVP columns from match_attendances |
+| add_unplayable_status | 2026-02-07 | Add unplayable status to match_status enum |
 
 See [Database Migrations](migrations.md) for migration management details.
